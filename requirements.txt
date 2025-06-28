@@ -10,11 +10,13 @@ uvicorn[standard]>=0.30.0,<0.31.0
 pydantic>=2.7.0,<2.8.0
 
 # Model Context Protocol server implementation
-fastapi-mcp>=0.1.0,<0.2.0
+fastapi-mcp>=0.1.8,<0.2.0
 
 # LangChain integration for OpenAI models (includes langchain-core)
 langchain-openai>=0.1.9,<0.2.0
 
-# Core LangChain components (often a transitive dependency of langchain-openai,
-# but explicitly listed as it's used for Prompts and Parsers)
-langchain-core>=0.2.1,<0.3.0
+# Core LangChain components
+langchain-core>=0.2.1,<0.3.0 # Keeping original, hoping it resolves with openai 0.1.9
+
+# For loading environment variables from .env files
+python-dotenv>=1.0.0,<2.0.0

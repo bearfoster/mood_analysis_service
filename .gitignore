@@ -1,73 +1,21 @@
-# .gitignore
+# mood_analysis_service/.gitignore
 
-# Python virtual environments
-# Specific venv names used in this project
+# Python virtual environment for this service
 venv_mood_analysis/
-venv_music_gen/
-venv_orchestration/
 
-# Common names for other venv folders (keep these for robustness)
-venv/
-.venv/
-env/
-.env/
-*/venv/
-*/.venv/
-*/env/
-*/.env/
+# Environment variables
+.env
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.pyc
 *.pyd
 *.so
-*.ipynb_checkpoints/ # If you use Jupyter notebooks
 
-# C extensions
-*.dll
-*.lib
-*.exp
-
-# Distribution / packaging
-.Python
-build/
-dist/
-*.egg-info/
-*.egg
-*.whl
-
-# PyInstaller / cx_Freeze / Nuitka / py2app builds
-*.spec
-build/
-dist/
-
-# Unit test / coverage reports
-.coverage
-.pytest_cache/
-htmlcov/
-.nox/
-
-# Editor/IDE files
-.idea/             # JetBrains IDEs (PyCharm, IntelliJ, etc.)
-.vscode/           # VS Code
-*.sublime-project
-*.sublime-workspace
-*.DS_Store         # macOS
-Thumbs.db          # Windows
-*.swp              # Vim swap files
-
-# Logs and databases
+# Logs and databases (if any are generated specific to this service)
 *.log
-*.sqlite3          # Common for SQLite databases
 *.db
 
-# Environment variables / secrets
-# IMPORTANT: This prevents your API keys and sensitive configurations from being committed!
-.env
-.flaskenv
-
-# Miscellaneous
-.history/          # Some editors keep a history directory
-.mypy_cache/       # Mypy type checker cache
-.ruff_cache/       # Ruff linter/formatter cache
-.pytest_cache/
+# Editor/IDE files (if any are generated locally within this folder)
+.idea/
+.vscode/

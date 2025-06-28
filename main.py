@@ -1,5 +1,8 @@
 # mood_analysis_service/main.py
 
+from dotenv import load_dotenv # ADDED
+load_dotenv() # ADDED: Load environment variables from .env file
+
 import os
 import json
 from fastapi import FastAPI, HTTPException, status
@@ -7,9 +10,6 @@ from pydantic import BaseModel, Field
 from typing import Literal, Dict, Any, List, Union
 
 # Corrected Import for fastapi-mcp v0.1.8
-# MCPService and tool decorator are no longer directly imported.
-# Instead, we use `add_mcp_server` to get the server instance,
-# which then automatically discovers tools from FastAPI routes.
 from fastapi_mcp.server import add_mcp_server
 from mcp.server.fastmcp import FastMCP # Need to import FastMCP for type hinting
 
@@ -56,7 +56,7 @@ DynamicMoodLiteral = Literal[tuple(ALLOWED_MOODS)]
 app = FastAPI(
     title="Mood Analysis Service",
     description="Agent for interpreting raw input data and translating it into a standardized 'mood' using an LLM.",
-    version="0.3.1" # Updated version due to MCP API fix
+    version="0.3.1"
 )
 
 # Initialize the Azure OpenAI Chat Model for mood analysis
@@ -85,8 +85,6 @@ class MoodOutput(BaseModel):
 
 
 # Initialize MCPService and attach it to the FastAPI app
-# This function creates and mounts the MCP server, and by default,
-# it will automatically discover and serve tools based on FastAPI routes' OpenAPI schema.
 mcp_server: FastMCP = add_mcp_server(
     app=app,
     name="Mood Analysis Agent",
@@ -94,7 +92,6 @@ mcp_server: FastMCP = add_mcp_server(
 )
 
 # --- Define the actual FastAPI route that implements the tool logic ---
-# This route itself acts as the "tool" that MCP will discover.
 @app.post("/analyze_weather_mood/", response_model=MoodOutput, status_code=status.HTTP_200_OK)
 async def analyze_weather_mood_route(input_data: WeatherMoodInput) -> MoodOutput:
     """
@@ -143,12 +140,9 @@ async def analyze_weather_mood_route(input_data: WeatherMoodInput) -> MoodOutput
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to analyze mood with LLM: {e}. Ensure LLM is correctly configured and responds with valid JSON matching allowed moods.")
 
 
-# Removed the explicit mcp_server.add_tool() call
-# Tools are automatically discovered from the FastAPI app routes by `add_mcp_server`.
-
 # To run this service:
 # 1. Ensure you have 'moods.json' in the same directory as this 'main.py'
 # 2. Ensure all requirements are installed in your active virtual environment.
-# 3. Set your Azure OpenAI environment variables.
+# 3. Set your Azure OpenAI environment variables. (No longer needed to manually export if .env is used)
 # 4. Navigate to the 'mood_analysis_service' directory in your terminal (with venv activated).
 # 5. Run the command: uvicorn main:app --reload --port 8001
