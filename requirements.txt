@@ -1,0 +1,20 @@
+# mood_analysis_service/requirements.txt
+
+# Web framework for building APIs
+fastapi>=0.111.0,<0.112.0
+
+# ASGI server to run FastAPI applications
+uvicorn[standard]>=0.30.0,<0.31.0
+
+# Data validation and parsing (FastAPI dependency, explicitly listed for clarity)
+pydantic>=2.7.0,<2.8.0
+
+# Model Context Protocol server implementation
+fastapi-mcp>=0.1.0,<0.2.0
+
+# LangChain integration for OpenAI models (includes langchain-core)
+langchain-openai>=0.1.9,<0.2.0
+
+# Core LangChain components (often a transitive dependency of langchain-openai,
+# but explicitly listed as it's used for Prompts and Parsers)
+langchain-core>=0.2.1,<0.3.0
