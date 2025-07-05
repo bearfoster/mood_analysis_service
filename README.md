@@ -49,7 +49,7 @@ Analyzes current weather conditions (temperature in Celsius and general conditio
 
 - Python 3.12
 - pip
-- Azure OpenAI API key, endpoint, API version, and deployed chat model
+- Azure OpenAI credentials (API key, endpoint, API version, and deployed chat model name)
 
 ### Steps
 
@@ -62,15 +62,20 @@ Analyzes current weather conditions (temperature in Celsius and general conditio
    ```sh
    python -m venv venv_mood_analysis
    ```
-   - **Git Bash:**  
+   - **Git Bash:**
      `source venv_mood_analysis/Scripts/activate`
-   - **Command Prompt:**  
+   - **Command Prompt:**
      `venv_mood_analysis\Scripts\activate`
-   - **PowerShell:**  
+   - **PowerShell:**
      `.\venv_mood_analysis\Scripts\Activate.ps1`
 
-3. **Create `moods.json`**
-   In the `mood_analysis_service` directory, create a file named `moods.json` with a JSON array of allowed moods.  
+3. **Install Dependencies**
+   ```sh
+   pip install -r requirements.txt
+   ```
+
+4. **Create `moods.json`**
+   In the `mood_analysis_service` directory, create a file named `moods.json` with a JSON array of allowed moods.
    Example:
    ```json
    [
@@ -86,40 +91,25 @@ Analyzes current weather conditions (temperature in Celsius and general conditio
    ]
    ```
 
-4. **Install Dependencies**
-   ```sh
-   pip install -r requirements.txt
+5. **Create `.env` File for Credentials**
+   In the `mood_analysis_service` directory, create a file named `.env`. The application uses this file to load your Azure credentials as environment variables, so you don't have to set them manually in your shell.
+
+   **Important:** Add `.env` to your `.gitignore` file to prevent committing secrets to version control.
+
+   Add the following content to your `.env` file, replacing the placeholders with your actual Azure credentials:
    ```
-
-5. **Set Azure OpenAI Environment Variables**
-
-   - **Git Bash:**
-     ```sh
-     export AZURE_OPENAI_API_KEY="YOUR_API_KEY"
-     export AZURE_OPENAI_ENDPOINT="https://YOUR_RESOURCE_NAME.openai.azure.com/"
-     export AZURE_OPENAI_API_VERSION="2024-02-15-preview"
-     export AZURE_OPENAI_CHAT_MODEL_NAME="your-deployment-name"
-     ```
-   - **Command Prompt:**
-     ```cmd
-     set AZURE_OPENAI_API_KEY=YOUR_API_KEY
-     set AZURE_OPENAI_ENDPOINT=https://YOUR_RESOURCE_NAME.openai.azure.com/
-     set AZURE_OPENAI_API_VERSION=2024-02-15-preview
-     set AZURE_OPENAI_CHAT_MODEL_NAME=your-deployment-name
-     ```
-   - **PowerShell:**
-     ```powershell
-     $env:AZURE_OPENAI_API_KEY="YOUR_API_KEY"
-     $env:AZURE_OPENAI_ENDPOINT="https://YOUR_RESOURCE_NAME.openai.azure.com/"
-     $env:AZURE_OPENAI_API_VERSION="2024-02-15-preview"
-     $env:AZURE_OPENAI_CHAT_MODEL_NAME="your-deployment-name"
-     ```
+   # .env file for Mood Analysis Service
+   AZURE_OPENAI_API_KEY="YOUR_API_KEY"
+   AZURE_OPENAI_ENDPOINT="https://YOUR_RESOURCE_NAME.openai.azure.com/"
+   AZURE_OPENAI_API_VERSION="2024-02-15-preview"
+   AZURE_OPENAI_CHAT_MODEL_NAME="your-deployment-name"
+   ```
 
 ---
 
 ## Running the Service
 
-With the virtual environment activated and environment variables set, start the FastAPI app:
+With the virtual environment activated, start the FastAPI app. The `.env` file will be loaded automatically.
 
 ```sh
 uvicorn main:app --reload --port 8001
