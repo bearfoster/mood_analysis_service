@@ -21,6 +21,10 @@ from langchain_core.output_parsers import JsonOutputParser
 
 # --- Load allowed moods from an external JSON file ---
 MOODS_FILE = os.path.join(os.path.dirname(__file__), "moods.json")
+DEFAULT_MOODS = [
+    "joyful", "calm", "melancholy", "energetic", "relaxing", "gloomy",
+    "serene", "adventurous", "upbeat"
+]
 ALLOWED_MOODS: List[str] = []
 
 try:
@@ -28,25 +32,15 @@ try:
         ALLOWED_MOODS = json.load(f)
     if not isinstance(ALLOWED_MOODS, list) or not all(isinstance(m, str) for m in ALLOWED_MOODS):
         raise ValueError("moods.json must contain a list of strings.")
-    print(f"Loaded allowed moods from {MOODS_FILE}: {ALLOWED_MOODS}")
 except FileNotFoundError:
     print(f"Error: {MOODS_FILE} not found. Please create it with a list of moods.")
-    ALLOWED_MOODS = [
-        "joyful", "calm", "melancholy", "energetic", "relaxing", "gloomy",
-        "serene", "adventurous", "upbeat"
-    ] # Fallback to default moods if file is missing
+    ALLOWED_MOODS = DEFAULT_MOODS # Fallback to default moods if file is missing
 except json.JSONDecodeError:
     print(f"Error: {MOODS_FILE} is not a valid JSON file. Falling back to default moods.")
-    ALLOWED_MOODS = [
-        "joyful", "calm", "melancholy", "energetic", "relaxing", "gloomy",
-        "serene", "adventurous", "upbeat"
-    ]
+    ALLOWED_MOODS = DEFAULT_MOODS
 except ValueError as e:
     print(f"Error loading moods: {e}. Falling back to default moods.")
-    ALLOWED_MOODS = [
-        "joyful", "calm", "melancholy", "energetic", "relaxing", "gloomy",
-        "serene", "adventurous", "upbeat"
-    ]
+    ALLOWED_MOODS = DEFAULT_MOODS
 
 # Dynamically create the Literal type for moods
 DynamicMoodLiteral = Literal[tuple(ALLOWED_MOODS)]
@@ -101,9 +95,6 @@ async def analyze_weather_mood_route(input_data: WeatherMoodInput) -> MoodOutput
     if mood_analysis_llm is None:
         raise HTTPException(status_code=500, detail="LLM not initialized in Mood Analysis Service. Check environment variables.")
 
-    temp = input_data.temperature_celsius
-    conditions = input_data.conditions
-
     mood_options_str = ", ".join([f"'{m}'" for m in ALLOWED_MOODS])
 
     mood_prompt = ChatPromptTemplate.from_messages(
@@ -115,11 +106,11 @@ async def analyze_weather_mood_route(input_data: WeatherMoodInput) -> MoodOutput
                 f"The mood MUST be one of the following exact strings: {mood_options_str}. "
                 f"The intensity must be a float between 0.0 and 1.0. "
                 f"Your response must be ONLY a JSON object with 'mood' and 'intensity' keys. "
-                f"Example: {{\"mood\": \"joyful\", \"intensity\": 0.8}}"
+                f"Example: \"mood\": \"joyful\", \"intensity\": 0.8"
             ),
             (
                 "human",
-                f"Analyze the mood for weather: Temperature is {temp}°C, conditions are '{conditions}'."
+                "Analyze the mood for weather: Temperature is {temperature}°C, conditions are '{conditions}'."
             )
         ]
     )
@@ -127,16 +118,19 @@ async def analyze_weather_mood_route(input_data: WeatherMoodInput) -> MoodOutput
     mood_chain = mood_prompt | mood_analysis_llm | JsonOutputParser()
 
     try:
-        llm_response = await mood_chain.invoke({})
+        llm_response = await mood_chain.ainvoke({
+            "temperature": input_data.temperature_celsius,
+            "conditions": input_data.conditions
+        })
         
         mood_output = MoodOutput(
             mood=llm_response.get("mood"),
             intensity=llm_response.get("intensity")
         )
-        print(f"Analyzed weather with LLM: Temp={temp}°C, Conditions='{conditions}' -> LLM Output: {llm_response} -> Validated Mood='{mood_output.mood}', Intensity={mood_output.intensity}")
+        print(f"Analyzed weather with LLM: Temp={input_data.temperature_celsius}°C, Conditions='{input_data.conditions}' -> LLM Output: {llm_response} -> Validated Mood='{mood_output.mood}', Intensity={mood_output.intensity}")
         return mood_output
     except Exception as e:
-        print(f"Error during LLM mood analysis for Temp={temp}°C, Conditions='{conditions}': {e}")
+        print(f"Error during LLM mood analysis for Temp={input_data.temperature_celsius}°C, Conditions='{input_data.conditions}': {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to analyze mood with LLM: {e}. Ensure LLM is correctly configured and responds with valid JSON matching allowed moods.")
 
 
