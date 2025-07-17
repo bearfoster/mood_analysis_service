@@ -9,10 +9,6 @@ from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import Literal, Dict, Any, List, Union
 
-# Corrected Import for fastapi-mcp v0.1.8
-from fastapi_mcp.server import add_mcp_server
-from mcp.server.fastmcp import FastMCP # Need to import FastMCP for type hinting
-
 # Import Azure OpenAI Chat Model for LLM-based mood analysis
 from langchain_openai import AzureChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -68,24 +64,48 @@ except Exception as e:
     mood_analysis_llm = None
 
 
+# --- Quasi Tool Discovery ---
+from typing import Dict
+
+TOOLS: Dict[str, Dict[str, Any]] = {}
+
+def register_tool(name: str, description: str, parameters: Dict[str, Any], response_schema: Any):
+    """
+    Register a tool for discovery.
+    """
+    def decorator(func):
+        TOOLS[name] = {
+            'name': name,
+            'description': description,
+            'parameters': parameters,
+            'response_schema': response_schema,
+            'function': func
+        }
+        return func
+    return decorator
+
 # Define Pydantic models for the tool's input and output.
 class WeatherMoodInput(BaseModel):
     temperature_celsius: float = Field(..., description="Temperature in Celsius.")
     conditions: str = Field(..., description="Current weather conditions as a descriptive string (e.g., 'a light misty drizzle', 'scorching sun').")
 
 class MoodOutput(BaseModel):
-    mood: DynamicMoodLiteral = Field(..., description="Inferred mood based on weather conditions.")
+    mood: str = Field(..., description="Inferred mood based on weather conditions.")
     intensity: float = Field(..., ge=0.0, le=1.0, description="Intensity of the mood (0.0 to 1.0).")
 
-
-# Initialize MCPService and attach it to the FastAPI app
-mcp_server: FastMCP = add_mcp_server(
-    app=app,
-    name="Mood Analysis Agent",
-    description="Analyzes environmental data to infer a prevailing mood using an LLM.",
+# Register the mood analysis tool
+@register_tool(
+    name="analyze_weather_mood",
+    description="Analyze weather data and return a prevailing mood and intensity.",
+    parameters={
+        'temperature_celsius': {'type': 'number', 'description': 'Temperature in Celsius.'},
+        'conditions': {'type': 'string', 'description': 'Current weather conditions as a descriptive string.'}
+    },
+    response_schema={
+        'mood': {'type': 'string', 'description': 'Inferred mood based on weather conditions.'},
+        'intensity': {'type': 'number', 'description': 'Intensity of the mood (0.0 to 1.0).'}
+    }
 )
-
-# --- Define the actual FastAPI route that implements the tool logic ---
 @app.post("/analyze_weather_mood/", response_model=MoodOutput, status_code=status.HTTP_200_OK)
 async def analyze_weather_mood_route(input_data: WeatherMoodInput) -> MoodOutput:
     """
@@ -133,6 +153,18 @@ async def analyze_weather_mood_route(input_data: WeatherMoodInput) -> MoodOutput
         print(f"Error during LLM mood analysis for Temp={input_data.temperature_celsius}°C, Conditions='{input_data.conditions}': {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to analyze mood with LLM: {e}. Ensure LLM is correctly configured and responds with valid JSON matching allowed moods.")
 
+# Tool discovery endpoint
+@app.get("/tools")
+async def list_tools():
+    return [
+        {
+            'name': tool['name'],
+            'description': tool['description'],
+            'parameters': tool['parameters'],
+            'response_schema': tool['response_schema']
+        }
+        for tool in TOOLS.values()
+    ]
 
 # To run this service:
 # 1. Ensure you have 'moods.json' in the same directory as this 'main.py'
